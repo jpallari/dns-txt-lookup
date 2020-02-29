@@ -22,18 +22,15 @@ int parse_cli_opts(struct cli_opts *opts, int argc, char *argv[]);
 void print_cli_opts_error(char *argv0, int error_code);
 
 int main(int argc, char **argv) {
-    struct cli_opts opts;
-    int cli_opts_code = 0;
+    int return_code = 0;
     struct __res_state state;
-    unsigned char response[BUF_LEN];
-    int response_len = 0;
-    ns_msg handle;
-    ns_rr record;
 
     // Parse CLI args
-    if ((cli_opts_code = parse_cli_opts(&opts, argc, argv)) != 0) {
+    struct cli_opts opts;
+    int cli_opts_code = parse_cli_opts(&opts, argc, argv);
+    if (cli_opts_code != 0) {
         print_cli_opts_error(argv[0], cli_opts_code);
-        return 1;
+        goto fail;
     }
 
     // Find TXT records
@@ -41,12 +38,15 @@ int main(int argc, char **argv) {
         fprintf(stderr, "state initialization failed\n");
         goto fail;
     }
+    unsigned char response[BUF_LEN];
+    int response_len;
     if ((response_len = res_nquery(&state, opts.domain, C_IN, T_TXT, response, BUF_LEN)) < 0) {
         print_ns_error(h_errno, opts.domain);
         goto fail;
     }
 
     // Parse the records
+    ns_msg handle;
     if (ns_initparse(response, response_len, &handle) < 0) {
         fprintf(stderr, "initparse failed: %s\n", strerror(errno));
         goto fail;
@@ -63,6 +63,7 @@ int main(int argc, char **argv) {
     }
 
     // Print the TXT records
+    ns_rr record;
     for (int i = 0; i < record_count; i++) {
         if (ns_parserr(&handle, ns_s_an, i, &record) < 0) {
             fprintf(stderr, "failed to parse record: %s\n", strerror(errno));
@@ -76,11 +77,14 @@ int main(int argc, char **argv) {
         );
     }
 
-    res_nclose(&state);
-    return 0;
+    goto exit;
+
 fail:
+    return_code = 1;
+exit:
+    // Clean up and exit
     res_nclose(&state);
-    return 1;
+    return return_code;
 }
 
 void print_ns_error(int error, const char *domain) {
