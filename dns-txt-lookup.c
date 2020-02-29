@@ -11,9 +11,6 @@
 
 #define BUF_LEN 4096
 
-extern int optind;
-extern char* optarg;
-
 struct cli_opts {
     char *domain;
     int max_records;
