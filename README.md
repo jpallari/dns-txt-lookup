@@ -20,9 +20,29 @@ Parameters:
 
 ## Build
 
-You can use make to build this tool:
+You can use `make` to build this tool:
 
     make
+
+Which produces a binary named `dns-txt-lookup`.
+
+## Examples
+
+Lookup all TXT records for `example.org`:
+
+    dns-txt-lookup example.org
+
+Lookup only one TXT record for `example.org`:
+
+    dns-txt-lookup -m 1 example.org
+
+Use `XXX` as the separator between TXT records:
+
+    dns-txt-lookup -s XXX example.org
+
+Use the null byte (`\0`) as the separator:
+
+    dns-txt-lookup -0 example.org
 
 ## Alternatives
 
